@@ -1,0 +1,5 @@
+xfonts-utils (1:7.7+6-deepin) stable; urgency=medium
+
+  * ['Rebuild  against by  current gcc 11.2']
+
+ -- Deepin Packages Builder <packages@deepin.org>  Wed, 10 Aug 2022 21:32:18 +0800

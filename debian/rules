@@ -1,0 +1,60 @@
+#!/usr/bin/make -f
+# debian/rules for the Debian xfonts-utils package.
+# Copyright © 2004 Scott James Remnant <scott@netsplit.com>
+# Copyright © 2005 Daniel Stone <daniel@fooishbar.org>
+# Copyright © 2005 David Nusinow <dnusinow@debian.org>
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+# This package contains multiple modules as shipped by upstream. Each module is # contained in a subdirectory in the root dir of the package. You must list each
+# subdirectory explicitly so that the build system knows what to build
+SUBDIRS = bdftopcf mkfontdir mkfontscale font-util fonttosfnt
+
+%:
+	dh $@ --with autotools-dev,quilt --parallel
+
+STAMP_DIR = stampdir
+
+CONFIG_STAMPS = $(addprefix $(STAMP_DIR)/configure-, $(SUBDIRS))
+BUILD_STAMPS = $(addprefix $(STAMP_DIR)/build-,$(SUBDIRS))
+
+override_dh_auto_configure: $(CONFIG_STAMPS)
+
+override_dh_auto_build: $(BUILD_STAMPS)
+
+$(STAMP_DIR)/configure-%:
+	mkdir -p $(STAMP_DIR)
+	dh_auto_configure -D$* -B$*-build -- \
+		--disable-silent-rules \
+		--with-mapdir=\$${prefix}/share/fonts/X11/util
+	>$@
+
+$(STAMP_DIR)/build-%:
+	mkdir -p $(STAMP_DIR)
+	dh_auto_build -D$* -B$*-build
+	>$@
+
+clean-%:
+	dh_auto_clean -D$* -B$*-build
+
+override_dh_auto_clean: $(addprefix clean-, $(SUBDIRS))
+	rm -rf $(STAMP_DIR)
+
+override_dh_auto_install:
+	for FILE in $(SUBDIRS); do \
+		cd "$$FILE"-build && $(MAKE) DESTDIR=$(CURDIR)/debian/tmp install ; \
+		cd ..; \
+	done
+
+override_dh_install:
+	dh_install --fail-missing
+
+override_dh_installxfonts:
+	# we don't actually install any fonts
+
+.PHONY: get-tarballs
+get-tarballs: $(addprefix get-tarball-,$(SUBDIRS))
+
+get-tarball-%:
+	uscan --no-conf --download --no-symlink --destdir . --package $* --upstream-version $(shell awk -F = '/^PACKAGE_VERSION=/ { print $$2 }' < $*/configure ) --watchfile debian/watch.$* || test $$? = 1

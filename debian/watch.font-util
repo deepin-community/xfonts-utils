@@ -1,0 +1,4 @@
+#git=git://anongit.freedesktop.org/xorg/font/util
+version=3
+opts="pgpsigurlmangle=s/$/.sig/" \
+https://xorg.freedesktop.org/releases/individual/font/ font-util-(.*)\.tar\.gz
